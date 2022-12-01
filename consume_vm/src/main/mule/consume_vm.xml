@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4cdb6b54-4916-4826-93da-65c18d51bb49" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="399b4ae4-cf6a-4550-933d-c560714d9b19" >
+		<vm:queues >
+			<vm:queue queueName="vm1" />
+		</vm:queues>
+	</vm:config>
+	<flow name="consume_vmFlow" doc:id="e4ee4df0-bb16-405e-9a64-dc2033aecb3c" >
+		<http:listener doc:name="Listener" doc:id="197e116a-c9e7-4730-9775-700124b6a65b" config-ref="HTTP_Listener_config" path="/test">
+			<http:response >
+				<http:body ><![CDATA[#[output application/json
+---
+payload]]]></http:body>
+			</http:response>
+		</http:listener>
+		<set-payload value="#[10]" doc:name="Set Payload" doc:id="304786f0-f8b3-463b-807f-774ed42907f4" />
+		<logger level="INFO" doc:name="Logger" doc:id="ca368d32-64b6-49b9-8512-beb3aa202660" message='#["Before publishing to VM Publish :::: The payload is" ++ payload as String]'/>
+		<vm:publish queueName="vm1" doc:name="Publish" doc:id="07a7fe31-b567-426c-b5b7-566c5ced772d" config-ref="VM_Config" correlationId="#[correlationId]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d2f05a14-fe75-4a48-a7b1-809cfb3f85b8" message='#["After publishing to VM Publish :::: The payload is" ++ payload as String]'/>
+	</flow>
+	<flow name="consume_vmFlow1" doc:id="0880243d-551e-4a48-9bca-4697672507ff" >
+		<http:listener doc:name="Listener" doc:id="fa481955-1ce6-475f-8b95-3aecaecad5df" config-ref="HTTP_Listener_config" path="/test1">
+			<http:response >
+				<http:body ><![CDATA[#[output application/json
+---
+payload]]]></http:body>
+			</http:response>
+		</http:listener>
+		<vm:consume queueName="vm1" doc:name="Consume" doc:id="43380dce-00d2-4bbf-8c3e-be0bf03396be" config-ref="VM_Config" timeout="50"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4d5a8434-884b-432c-a212-cbd243f5a255" message='#["Before massage receiving  using VM   :::: The payload is" ++ payload as String]'/>
+		<set-payload value="#[20]" doc:name="Set Payload" doc:id="0312ad27-a751-471e-ba32-f232c0758fbf" />
+		<logger level="INFO" doc:name="Logger" doc:id="445fff5c-98b7-47eb-b6fb-016e89fbdd7f" message='#["Before massage receiving  using VM   :::: The payload is" ++ payload as String]'/>
+	</flow>
+</mule>
